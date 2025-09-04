@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Lua Coder Game</title>
+<style>
+  body { background: #111; color: #eee; font-family: monospace; padding: 20px; }
+  #editor { width: 100%; height: 200px; background: #222; color: #fff; font-family: monospace; border-radius: 6px; padding: 10px; white-space: pre; overflow-y: auto; }
+  b { font-weight: bold; }
+  .terminal { margin-top: 10px; background: #000; color: #0f0; padding: 10px; border-radius: 8px; height: 200px; overflow-y: auto; }
+  .input-line { color: #0ff; }
+  .error { color: #f55; }
+  .log { color: #0f0; }
+</style>
+<script src="https://unpkg.com/fengari-web/dist/fengari-web.js"></script>
+</head>
+<body>
+<h1>Lua Coder Game</h1>
+
+<div id="editor" contenteditable="true">
+local function add(a, b)
+    if a == nil or b == nil then
+        return 0
+    end
+    return a + b
+end
+</div>
+<button onclick="runLua()">▶ Run Lua</button>
+
+<div class="terminal" id="terminal"></div>
+<input type="text" id="cmd" placeholder="Type $lua commands here">
+
+<script>
+const terminal = document.getElementById("terminal");
+const cmdInput = document.getElementById("cmd");
+
+function printToTerminal(msg, cls="") {
+  const line = document.createElement("div");
+  if (cls) line.classList.add(cls);
+  line.textContent = msg;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+// Run Lua code without try/catch
+function runLua() {
+  const code = document.getElementById("editor").innerText;
+  const fn = fengari.load(code);
+  if (fn) {
+    fn();
+    printToTerminal("[OK] Lua code executed", "log");
+  } else {
+    printToTerminal("[ERROR] Lua code could not be loaded", "error");
+  }
+}
+
+// Handle $lua terminal commands
+cmdInput.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    const command = cmdInput.value.trim();
+    printToTerminal("> " + command, "input-line");
+    handleCommand(command);
+    cmdInput.value = "";
+  }
+});
+
+function handleCommand(command) {
+  if (command.startsWith("$lua")) {
+    const parts = command.split(" ");
+    if (parts[1] === "install") {
+      printToTerminal("Lua Coder Game installed: " + (parts[2] || "v-unknown"), "log");
+    } else if (parts[1] === "clog") {
+      const match = command.match(/clog\s+"(.*?)"/);
+      if (match) printToTerminal("[LOG] " + match[1], "log");
+      else printToTerminal("[LOG] Missing text", "log");
+    } else if (parts[1] === "cerr") {
+      const match = command.match(/cerr\s+"(.*?)"/);
+      if (match) printToTerminal("[ERROR] " + match[1], "error");
+      else printToTerminal("[ERROR] Missing text", "error");
+    } else {
+      printToTerminal("Unknown $lua command", "error");
+    }
+  } else {
+    printToTerminal("Invalid terminal command", "error");
+  }
+}
+</script>
+</body>
+</html>
